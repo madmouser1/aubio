@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#ifdef __APPLE__
+#ifdef HAVE_SINK_APPLE_AUDIO
 
 #include "aubio_priv.h"
 #include "fvec.h"
@@ -60,6 +60,11 @@ aubio_sink_apple_audio_t * new_aubio_sink_apple_audio(char_t * uri, uint_t sampl
   s->path = uri;
   s->max_frames = MAX_SIZE;
   s->async = true;
+
+  if (uri == NULL) {
+    AUBIO_ERROR("sink_apple_audio: Aborted opening null path\n");
+    goto beach;
+  }
 
   s->samplerate = 0;
   s->channels = 0;
@@ -266,4 +271,4 @@ void del_aubio_sink_apple_audio(aubio_sink_apple_audio_t * s) {
   return;
 }
 
-#endif /* __APPLE__ */
+#endif /* HAVE_SINK_APPLE_AUDIO */

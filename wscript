@@ -72,6 +72,9 @@ def options(ctx):
     add_option_enable_disable(ctx, 'double', default = False,
             help_str = 'compile in double precision mode',
             help_disable_str = 'compile in single precision mode (default)')
+    add_option_enable_disable(ctx, 'fat', default = False,
+            help_str = 'build fat binaries (darwin only)',
+            help_disable_str = 'do not build fat binaries (default)')
 
     ctx.add_option('--with-target-platform', type='string',
             help='set target platform for cross-compilation', dest='target_platform')
@@ -102,23 +105,24 @@ def configure(ctx):
         ctx.define('HAVE_WIN_HACKS', 1)
         ctx.env['cshlib_PATTERN'] = 'lib%s.dll'
 
-    if target_platform == 'darwin':
+    if target_platform == 'darwin' and ctx.options.enable_fat:
         ctx.env.CFLAGS += ['-arch', 'i386', '-arch', 'x86_64']
         ctx.env.LINKFLAGS += ['-arch', 'i386', '-arch', 'x86_64']
+
+    if target_platform in [ 'darwin', 'ios', 'iosimulator']:
         ctx.env.FRAMEWORK = ['CoreFoundation', 'AudioToolbox', 'Accelerate']
+        ctx.define('HAVE_SOURCE_APPLE_AUDIO', 1)
+        ctx.define('HAVE_SINK_APPLE_AUDIO', 1)
         ctx.define('HAVE_ACCELERATE', 1)
 
     if target_platform in [ 'ios', 'iosimulator' ]:
-        ctx.define('HAVE_ACCELERATE', 1)
         ctx.define('TARGET_OS_IPHONE', 1)
-        ctx.env.FRAMEWORK = ['CoreFoundation', 'AudioToolbox', 'Accelerate']
-        SDKVER="7.0"
         MINSDKVER="6.1"
         ctx.env.CFLAGS += ['-std=c99']
         if target_platform == 'ios':
             DEVROOT = "/Applications/Xcode.app/Contents"
             DEVROOT += "/Developer/Platforms/iPhoneOS.platform/Developer"
-            SDKROOT = "%(DEVROOT)s/SDKs/iPhoneOS%(SDKVER)s.sdk" % locals()
+            SDKROOT = "%(DEVROOT)s/SDKs/iPhoneOS.sdk" % locals()
             ctx.env.CFLAGS += [ '-arch', 'arm64' ]
             ctx.env.CFLAGS += [ '-arch', 'armv7' ]
             ctx.env.CFLAGS += [ '-arch', 'armv7s' ]
@@ -130,7 +134,7 @@ def configure(ctx):
         else:
             DEVROOT = "/Applications/Xcode.app/Contents"
             DEVROOT += "/Developer/Platforms/iPhoneSimulator.platform/Developer"
-            SDKROOT = "%(DEVROOT)s/SDKs/iPhoneSimulator%(SDKVER)s.sdk" % locals()
+            SDKROOT = "%(DEVROOT)s/SDKs/iPhoneSimulator.sdk" % locals()
             ctx.env.CFLAGS += [ '-arch', 'i386' ]
             ctx.env.CFLAGS += [ '-arch', 'x86_64' ]
             ctx.env.LINKFLAGS += ['-arch', 'i386']
